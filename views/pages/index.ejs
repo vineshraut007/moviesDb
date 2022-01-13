@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+            <%- include("../partials/head"); %>
+</head>
+
+<body>
+        <header class="">
+            <%- include("../partials/header"); %>
+        </header>
+
+            <%- include("../partials/panel")%>
+        <div class="container" id="movies"> 
+            <button type="button"><%= resultType%></button>
+            <% if(error){%>
+            <%= "Server: Something went wrong"%>
+            <% }%>
+         <ul>
+            <% if(!error){ movies.forEach(function(movie){%>
+              <% Date.prototype.getDateWithoutTime%>
+                <li>
+                    <div class="row s6 m6">
+                    <div class="col s12 m6">
+                    <div class="card blue-grey darken-3">
+                    <div class="card-content white-text">
+                    <div class="card-image">
+                        <img src="https://cdn5.vectorstock.com/i/1000x1000/22/84/movie-poster-template-vector-16752284.jpg" alt="movie poster" width="180" height="275"> 
+                    <span class="card-title"><%= movie.title %></span> </div>- <%= movie.description %>
+                    <br><b>Length: </b><%= movie.duration %>
+                    <br><b>Release: </b><%= movie.releaseDate.toISOString().slice(0,10) %>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                </li>
+            <% })}%>
+         </ul>
+                   <ul class="pagination">
+                    <% if( current != 0 && !error){ %> 
+                         <li><a href="<%= path+"/"+(current -1) %>" >Previous</a></li>
+                    <% }%>
+
+                       <% for(let i = 1; i <= totalPages; i++ ) {%>
+                        <% if(i-1 == current ){%>
+                            <li class="disabled"><a href="<%= path + '/' + current %>"><%= i %></a></li>
+                        <%} else {%>
+                        <li class="waves-effect"><a href="<%= path + '/' + (i - 1) %>"><%= i %></a></li>
+                       <%}}%>
+
+                    <% if( current != (totalPages -1) && !error){ %> 
+                         <li><a href="<%= path+ "/" +(parseInt(current) + parseInt('1')) %>" >Next</a></li>
+                    <% }%>
+                   </ul>
+        </div>
+
+        <footer class="container" style="text-align:center">
+            <%- include("../partials/footer");%>
+        </footer>
+</body>
+
+</html>
