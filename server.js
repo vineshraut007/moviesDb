@@ -8,16 +8,16 @@ var db;
 
 
 app.set("view engine","ejs")
-app.use(express.json())
-app.use(express.urlencoded({extended:false}))
+//app.use(express.json())
+//app.use(express.urlencoded({extended:false}))
 
 const pool = mariadb.createPool(
 {
   host:'localhost',
   port:3306,
-  user:'databaseUsername', 
-  password:'databaseUserpassword',
-  database:"databaseName",
+  user:'v1n3', 
+  password:'vineshop',
+  database:"MOVIES",
   connectionLimit:1
 });
 
@@ -59,7 +59,7 @@ app.get("/movies/:page",(req,res)=>
         .then((rows)=>
         {  
               res.render("pages/index", {movies : rows, current : page, totalPages:totalPages,
-                                        resultType:"Latest Movies",path:"/movies", error:false})
+                                        resultType:"Latest Movies",path:"/movies", query:null, error:false})
         })
         .catch((err)=> {res.send(err); console.log(err)})
     })
@@ -88,7 +88,7 @@ app.get("/sortFilter/:page",
 //body("page").toInt(),
 //body("lang").trim().escape(),
 //body("sortType").trim().escape(),
-(req,res, next)=>
+(req,res,next)=>
 {
         /*
         //send error to client, for invalid data 
@@ -96,12 +96,11 @@ app.get("/sortFilter/:page",
         if (!errors.isEmpty()) {
           return res.status(400).json({ errors: errors.array() });
         }*/
-            console.log("APP GET /sortFilter/:page RAN =>"+req.url )
-        var genre = req.params.genre || false;
+        var genre = req.query.genre || false;
         var page = req.params.page || 0;
-        var language = req.params.lang || false;
-        var sortType = req.params.sortType || "releaseDate";
-        
+        var language = req.query.lang || false;
+        var sortType = req.query.sortType || "releaseDate";
+        var query = '?' + req.url.split('?')[1]
         //encode the genre & langauge to number
         switch(genre)
         {
@@ -135,22 +134,28 @@ app.get("/sortFilter/:page",
             {
                 db.query(`SELECT *, ROW_NUMBER() OVER(ORDER BY ${sortType} DESC) pid FROM movies WHERE id IN (SELECT mid FROM  (SELECT mid FROM movieCategory WHERE cid = ${language} ) AS lang WHERE mid  IN (SELECT mid FROM movieCategory  WHERE cid = ${genre}))`)
                 .then((rows) => {
+                    console.log(rows)
                   res.render("pages/index",{movies:rows , current:page, totalPages:totalPages,
-                                resultType:"Sort Results",path:"/sortFilter",error:false})
+                                resultType:"Sort Results",path:"/sortFilter", query:query ,error:false})
+                  return;
                 })
-                .catch((err) => {console.log(err); res.render("pages/index",{movies:err})})
+                .catch((err) => {console.log(err); res.render("pages/index",{movies:err, current:0, 
+                                                        resultType:"Error Occured", path:"/sortFilter", query:query ,error:true})})
            
             }
 
             //when SORT is BASED on language OR genre, any one
             else if( category = (genre || language) )
             {
-                db.query(`WITH filter AS (SELECT *, ROW_NUMBER() OVER(ORDER BY duration DESC) pid FROM movies WHERE id IN (SELECT mid FROM movieCategory WHERE cid = ${category})) select  * from filter  WHERE pid > ${page} LIMIT 4;`)
+                db.query(`WITH filter AS (SELECT *, ROW_NUMBER() OVER(ORDER BY ${sortType} DESC) pid FROM movies WHERE id IN (SELECT mid FROM movieCategory WHERE cid = ${category})) select  * from filter  WHERE pid > ${page} LIMIT 4;`)
                 .then((rows)=> {
+                    console.log(rows)
                     res.render("pages/index",{movies:rows, current: page, totalPages: totalPages,
-                                                resultType:"Sort Result",path:"/sortFilter", error:false})
+                                                resultType:"Sort Result",path:"/sortFilter",query:query, error:false})
+                    return;
                  })
-                .catch((err) => {console.log(err); res.render("pages/index",{movies:err})})
+                .catch((err) => {console.log(err); res.render("pages/index",{movies:err, current:0, 
+                                                        resultType:"Error Occured", path:"/sortFilter", query:query ,error:true })})
             }
 
     })
@@ -158,9 +163,9 @@ app.get("/sortFilter/:page",
 
    
     //default case, if anything goes wrong
-          res.render("pages/index",{movies:0, current: 0, totalPages: 0,
-                                            resultType:"ERROR OCCURED",path:"/sortFilter", error:true})
-    next(); 
+    //      res.render("pages/index",{movies:0, current: 0, totalPages: 0,
+     //                                       resultType:"ERROR OCCURED",path:"/sortFilter", error:true})
+    //next()
 })
 
 /*
@@ -172,5 +177,5 @@ app.get("*",(req,res)=>{
 */
 
 app.listen(port,()=>{
-    console.log("listening on port 8080..!")
+    console.log("listening on port: "+port)
 })
